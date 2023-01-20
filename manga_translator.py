@@ -1,6 +1,5 @@
 from folder_manager import FolderManager
 from text_segmentation import TextSegmenation, TextSegmenationDetection
-# from text_detection import TextDetection
 from text_ocr import TextOcr
 from text_translate import TextTranslator
 from text_draw import TextDraw
@@ -31,7 +30,6 @@ def parse_arguments():
     parser.add_argument('--manga_seg_load_cpu',   action='store_true', default=False, help='Whether to load the Manga-text-segmentation model on CPU. Enable if you run out of VRAM')
 
     # detection
-    # parser.add_argument('--txt_box_postprocess', type=lambda x: (str(x).lower() == 'true'), default=False, help='Whether to post process the text box detected.')
     parser.add_argument('--contour_size',     type=float, default=0.025, help='used to determine text boxes in the detector')
 
     # OCR
@@ -41,7 +39,7 @@ def parse_arguments():
 
     # tranlation
     parser.add_argument('--translator',       type=str, default='argos', choices=['argos', 'google', 'eztrans'], help='name of the translation model used')
-    parser.add_argument('--font_style',       type=str, default='komika', \
+    parser.add_argument('--font_style',       type=str, default='komika_merged', \
                                                 choices=['default', 'gidole', 'baskerville', 'komika',\
                                                          'NotoSans', 'FZHT', 'emoji', 'komika_merged'], help='name of the font used')
     parser.add_argument('--font_size',        type=int, default=0, help='0 means picking a size automatically based on text bubble sizes')
@@ -64,17 +62,11 @@ class MangaTranslator():
         # for directory management
         self.folder = FolderManager(args)
         # initialize different modules
-        # self.textSegmentation = TextSegmenation(args.seg_engine, args)
-        # self.textDetection    = TextDetection(args)
         self.text_seg_detector = TextSegmenationDetection(args.seg_engine, args)
         self.textOcr          = TextOcr(args, self.folder.OCR_folder, args.OCR_engine)
         self.textTranslator   = TextTranslator(args, args.translator, self.folder.OCR_folder)
         self.textDraw         = TextDraw(args, args.font_style, args.font_size)
 
-        # self.textPostProcessor = TestPostProcessor(args, self.folder.inpaintedFolder, \
-        #                                             self.textSegmentation, self.textDection)
-
-        
     def run(self):
         # get all the manga files to be translated
         oriFileList = glob.glob(self.args.raw_dir + '/*')
@@ -86,25 +78,7 @@ class MangaTranslator():
         
 
     def processTranslationTask(self, fileName):
-        # text segmentation
-        # print ("================== Started segmentation ==================")
-        # # the outputs here are two images: one in the text-only folder with all the segmented texts
-        # # the second in the inpainted folder, which is the text-less original manga, with some inpainting 
-        # # done to minimize damage to the background.
-        # textMask = self.textSegmentation.segmentPage(fileName, self.folder.inpaintedFolder, self.folder.textOnlyFolder)
-        # print ("================== Finished segmentation ==================")
-
-        # # text detection
-        # print ("================== Started text box detection ==================")
-        # textBoxList = self.textDetection.textDetect(fileName, self.folder.textOnlyFolder)
-        # print ("================== Finished text box detection ==================")
-
-        # # post-processing for segmentation and detection results
-        # print ("================== Started segmentation postprocessing ==================")
-        # # outputs the final list of text boxes we will OCR
-        # textBoxList = self.textDetection(fileName, textBoxList, textMask, self.textSegmentation)
-        # print ("================== Finished segmentation postprocessing ==================")
-
+        # text segmentation and text box detection
         textBoxList = self.text_seg_detector.segment_and_detect(fileName, \
                                     self.folder.inpaintedFolder, self.folder.textOnlyFolder)
 

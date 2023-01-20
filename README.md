@@ -9,12 +9,20 @@ Features:
 - A formatter that displays the translated texts in the text bubbles
 
 
-Much of the base code is borrowed from: https://github.com/ttop32/JMTrans. Some notable changes/improvements:
+Some base code is borrowed from: https://github.com/ttop32/JMTrans. Notable changes/improvements:
 - Better [segmentation model](https://github.com/juvian/Manga-Text-Segmentation), which is based on ResNet34.
 - Better [OCR model](https://github.com/kha-white/manga-ocr), which is based on ViT.
 - Changed translation APIs (`googletrans` and `google_trans_new` no longer works, AFAIK).
 - Some hacks to improve English text formatting 
 - More detailed documentations
+
+
+## Updates
+
+### 1/19/2023
+- Added merged font that supports formatting special characters on the page, e.g., 〜, ♪. 
+- Added filtering mechanism to cull out text boxes that in fact have no texts, which improves OCR and final results.
+- Added options to use CPU in the case of large images causing excessive GPU memory usage.
 
 
 
@@ -94,21 +102,30 @@ To see all the available options and their usage, run
 python manga_translator.py --help
 ```
 
-Below are some additional notes on individual modules.
+### Parameters worth tuning
 
-### Text Segmentation
+If the quality of the translated pages are less than desirable, it may be helpful to set the `--verbose` flag and inspect the additional debugging outputs, e.g., the individual text boxes, their OCR results, and the translated results in the `OCR` folder under the result dir.
 
-In general, [Manga segmentation](https://github.com/juvian/Manga-Text-Segmentation) seems to work decently well. 
+Below lists some important parameters that may fix your issues with proper tuning:
+- `--contour_size` controls the size of the element used to determine text boxes, expressed as a percentage of the image length. Essentially, a bigger contour size means the text boxes are more likely to join each other to form bigger text boxes. If the contour size is too small, then each text boxes will be broken into separate parts, and the OCR/translation quality will be bad. If the contour size is too big, then you have very large text boxes as unions of several blocks of text, which is also hard for OCR purposes.
 
-### OCR
+- `--conf_filter_thres` controls the lower bound on the Tesseract OCR confidence before we deem the text box unfit for OCR purposes. A biggest value means more text blocks will get filtered out, and some legitimate texts may not be translated; a smaller value means some texts boxes that don't actually contain text may get included, which will be OCR-ed and translated, resulting in random texts floating around the page. A good balance for this value is important and depends somewhat on whether you rather leave texts untranslated or have nonsensible texts interfering with the drawing.
 
-[Manga OCR](https://github.com/juvian/Manga-Text-Segmentation) works great and is robust with respect to some noises on the background, i.e., if the text is not originally in a box with white background.
+### Additional notes on individual modules.
 
-### Translator
+#### Text Segmentation
+
+In general, [Manga segmentation](https://github.com/juvian/Manga-Text-Segmentation) works like a charm.
+
+#### OCR
+
+[Manga OCR](https://github.com/juvian/Manga-Text-Segmentation) works great and is robust with respect to some noises on the background, i.e., if the text is not originally in a box with white background. However, all OCR tools struggle if multiple blocks of texts are joined together into a single box, so it is important to segment and detect the text boxes correctly prior to OCR.
+
+#### Translator
 
 Google translation is superior to the other options, and really the only sensible one in most cases.
 
-### Fonts
+#### Fonts
 
 Some basic fonts are included in `lib_/fonts`. For English, [Komika](https://www.1001fonts.com/komika-font.html) is the closet free font I could find for a typical translated manga. Feel free to use your own fonts!
 
