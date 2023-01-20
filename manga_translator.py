@@ -50,7 +50,7 @@ def parse_arguments():
 
     # formatter
     parser.add_argument('--break_long_words', type=lambda x: (str(x).lower() == 'true'), default=False, help='break long words into multiple lines in the formatter')
-    parser.add_argument('--text_pad_ratio',   type=float, default=1.2, help='ratio to widen the text box in the formatter')
+    parser.add_argument('--text_pad_ratio',   type=float, default=1.0, help='ratio to widen the text box in the formatter')
 
 
     args = parser.parse_args()

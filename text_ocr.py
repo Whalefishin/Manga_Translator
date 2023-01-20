@@ -72,23 +72,23 @@ class TextOcr():
         image = PIL.Image.fromarray(img)
         text = self.mocr(image)
 
-        # Idea: have some type of sanity check that the img contains to be texts at all
-        # because manga-ocr will decipher texts even if there are none.
-        # NOTE: manga-ocr doesn't provide a confidence measure for its outputs
-        # so we borrow the average confidence from Tesseract on the same img
-        if self.args.conf_filter:
-            custom_oem_psm_config = r'--psm 5' # important Tesseract option for vertical texts
-            text_Tes = pytesseract.image_to_data(image, lang='jpn_vert', config=custom_oem_psm_config, \
-                                                output_type='data.frame')
-            conf = text_Tes['conf'].to_numpy()
-            conf_avg = conf[conf != -1].mean()
+        # # Idea: have some type of sanity check that the img contains to be texts at all
+        # # because manga-ocr will decipher texts even if there are none.
+        # # NOTE: manga-ocr doesn't provide a confidence measure for its outputs
+        # # so we borrow the average confidence from Tesseract on the same img
+        # if self.args.conf_filter:
+        #     custom_oem_psm_config = r'--psm 5' # important Tesseract option for vertical texts
+        #     text_Tes = pytesseract.image_to_data(image, lang='jpn_vert', config=custom_oem_psm_config, \
+        #                                         output_type='data.frame')
+        #     conf = text_Tes['conf'].to_numpy()
+        #     conf_avg = conf[conf != -1].mean()
 
-            # if Tesseract has low confidence on the output, which typically
-            # happens if the image has no text, or if the texts are written in some 
-            # nonconventional script (typically some onomatopoeia).
-            # In this case, we do not OCR it for downstream translation
-            if np.isnan(conf_avg) or conf_avg < self.args.conf_filter_thres:
-                text = ''
+        #     # if Tesseract has low confidence on the output, which typically
+        #     # happens if the image has no text, or if the texts are written in some 
+        #     # nonconventional script (typically some onomatopoeia).
+        #     # In this case, we do not OCR it for downstream translation
+        #     if np.isnan(conf_avg) or conf_avg < self.args.conf_filter_thres:
+        #         text = ''
 
         if self.args.verbose:
             cv2.imwrite(os.path.join(self.OCR_folder, '{}_text{}.png'.format(fname, txt_idx)), img)
@@ -96,10 +96,10 @@ class TextOcr():
             log_dir = os.path.join(self.OCR_folder, 'log.txt')
             cv2.imwrite(save_dir, img)
             with open(log_dir, 'a', encoding='utf8') as f:
-                if self.args.conf_filter:
-                    f.write('Image {}, text {} reads: {}; Tesseract conf: {:.2f} \n'.format(fname, txt_idx, text, conf_avg))
-                else:
-                    f.write('Image {}, text {} reads: {} \n'.format(fname, txt_idx, text))
+                # if self.args.conf_filter:
+                #     f.write('Image {}, text {} reads: {}; Tesseract conf: {:.2f} \n'.format(fname, txt_idx, text, conf_avg))
+                # else:
+                f.write('Image {}, text {} reads: {} \n'.format(fname, txt_idx, text))
             f.close()
 
         return text

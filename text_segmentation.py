@@ -75,7 +75,7 @@ class TextDetection():
         
         noiseSizeParam = int(ele_size[0]/3)
         contours = [c for c in contours if c.shape[0] > noiseSizeParam** 2]     
-        Rect = [cv2.boundingRect(i) for i in contours] # no padding   
+        Rect  = [cv2.boundingRect(i) for i in contours] # no padding   
         RectP = [(max(int(i[0]-noiseSizeParam),0),max(int(i[1]-noiseSizeParam),0),\
             min(int(i[0]+i[2]+noiseSizeParam),img.shape[1]),min(int(i[1]+i[3]+noiseSizeParam), img.shape[0])) for i in Rect]       #with padding, box  x1,y1,x2,y2 
 
@@ -86,8 +86,9 @@ class TextDetection():
         textOnlyImage[txt_mask==0] = 255
         if self.args.conf_filter:
             I_keep = []
+            mask_new = np.zeros(txt_mask.shape, np.uint8)
             custom_oem_psm_config = r'--psm 5' # important Tesseract option for vertical texts
-            for i,r in enumerate(RectP):
+            for i,r in enumerate(Rect):
                 x1, y1, x2, y2 = r
                 # Cropping the text block for giving input to OCR 
                 cropped = textOnlyImage[y1: y2, x1: x2] 
@@ -102,6 +103,8 @@ class TextDetection():
                 # In this case, we do not OCR it for downstream translation
                 if not np.isnan(conf_avg) and conf_avg > self.args.conf_filter_thres:
                     I_keep.append(i)
+                    # add this box to the new mask
+                    mask_new = cv2.rectangle(mask_new, (x1, y1), (x2, y2), (255,255,255), -1)
 
             # keep the boxes that actually contain texts
             contours = [contours[i] for i in I_keep]
@@ -109,9 +112,9 @@ class TextDetection():
             RectP    = [RectP[i] for i in I_keep]
 
             # adjust the masks so to match the new boxes
-            mask_new = np.zeros(txt_mask.shape, np.uint8)
-            mask_new = cv2.drawContours(mask_new, contours, -1, (255,255,255), -1)
             txt_mask = cv2.bitwise_and(mask_new, txt_mask)
+            # get the new text-only image, which only contains texts in the filtered
+            # text boxes
             textOnlyImage = cv2.bitwise_and(img_orig, txt_mask)
             textOnlyImage[txt_mask==0] = 255
 
@@ -182,7 +185,7 @@ class TextSegmenation():
         """
         fileName = os.path.basename(imgPath)
         save_path_text_only_img = os.path.join(outputTextOnlyPath, fileName)
-        save_path_inpainted_img = os.path.join(outputInpaintedPath, fileName)
+        # save_path_inpainted_img = os.path.join(outputInpaintedPath, fileName)
         # preprocess the image size
         # for example, sickzil has poor quality on high resolution image, so we downsize it if necessary
         self.resize(imgPath) 
